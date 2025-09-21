@@ -1,0 +1,73 @@
+{
+  "name": "Conversation",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "therapy",
+        "gossip"
+      ],
+      "description": "Type of conversation"
+    },
+    "title": {
+      "type": "string",
+      "description": "Conversation title or topic"
+    },
+    "messages": {
+      "type": "array",
+      "description": "Array of messages in the conversation",
+      "items": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "mood_before": {
+      "type": "string",
+      "enum": [
+        "very_sad",
+        "sad",
+        "neutral",
+        "happy",
+        "very_happy"
+      ]
+    },
+    "mood_after": {
+      "type": "string",
+      "enum": [
+        "very_sad",
+        "sad",
+        "neutral",
+        "happy",
+        "very_happy"
+      ]
+    }
+  },
+  "required": [
+    "type",
+    "messages"
+  ],
+  "rls": {
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "write": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "name": "NutritionLog",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the nutrition log"
+    },
+    "meal_type": {
+      "type": "string",
+      "enum": [
+        "breakfast",
+        "lunch",
+        "dinner",
+        "snack"
+      ],
+      "description": "Type of meal"
+    },
+    "food_name": {
+      "type": "string",
+      "description": "Name of the food item"
+    },
+    "calories": {
+      "type": "number",
+      "description": "Estimated calories"
+    },
+    "protein": {
+      "type": "number",
+      "description": "Protein content in grams"
+    },
+    "carbs": {
+      "type": "number",
+      "description": "Carbohydrate content in grams"
+    },
+    "fat": {
+      "type": "number",
+      "description": "Fat content in grams"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "URL of the food image"
+    }
+  },
+  "required": [
+    "date",
+    "meal_type",
+    "food_name"
+  ],
+  "rls": {
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "write": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

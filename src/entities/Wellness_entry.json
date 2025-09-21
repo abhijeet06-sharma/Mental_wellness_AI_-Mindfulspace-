@@ -1,0 +1,71 @@
+{
+  "name": "WellnessEntry",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the wellness entry"
+    },
+    "mood": {
+      "type": "string",
+      "enum": [
+        "very_sad",
+        "sad",
+        "neutral",
+        "happy",
+        "very_happy"
+      ],
+      "description": "Overall mood for the day"
+    },
+    "energy_level": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10,
+      "description": "Energy level from 1-10"
+    },
+    "sleep_hours": {
+      "type": "number",
+      "description": "Hours of sleep"
+    },
+    "sleep_quality": {
+      "type": "string",
+      "enum": [
+        "poor",
+        "fair",
+        "good",
+        "excellent"
+      ],
+      "description": "Quality of sleep"
+    },
+    "stress_level": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10,
+      "description": "Stress level from 1-10"
+    },
+    "gratitude": {
+      "type": "string",
+      "description": "What the user is grateful for today"
+    },
+    "emotions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Specific emotions felt during the day"
+    }
+  },
+  "required": [
+    "date",
+    "mood"
+  ],
+  "rls": {
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "write": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}
