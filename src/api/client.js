@@ -1,5 +1,5 @@
-// The base URL of your FastAPI backend
-const API_BASE_URL = "http://127.0.0.1:8000";
+// The base URL of your deployed FastAPI backend
+const API_BASE_URL = "https://mental-wellness-ai-mindfulspace.onrender.com";
 
 const apiClient = async (endpoint, options = {}) => {
   // Get the token from localStorage
@@ -26,11 +26,10 @@ const apiClient = async (endpoint, options = {}) => {
   });
 
   // If the response is a 401 Unauthorized, the token might be bad.
-  // We remove it and redirect to the login page.
+  // Remove it and redirect to the login page
   if (response.status === 401) {
     localStorage.removeItem("token");
     window.location.href = "/login";
-    // Throw an error to stop further processing in the component that called this
     throw new Error("Unauthorized");
   }
 
@@ -46,7 +45,7 @@ const apiClient = async (endpoint, options = {}) => {
     return response.json();
   }
   
-  // Otherwise, return the raw response (for cases like DELETE that may not have a body)
+  // Otherwise, return the raw response
   return response;
 };
 
