@@ -36,7 +36,8 @@ export default function Therapist() {
     setIsLoading(true);
 
     try {
-      await apiClient("/generate", {
+      // Call backend and get AI response directly
+      const responseData = await apiClient("/generate", {
         method: "POST",
         body: JSON.stringify({
           prompt: userMessage.content,
@@ -44,17 +45,29 @@ export default function Therapist() {
           timestamp: userMessage.timestamp,
         }),
       });
-      const updatedMessages = await apiClient(`/conversations/${currentConversation.id}/messages`);
-      setMessages(updatedMessages);
+
+      const aiMessage = {
+        role: "assistant",
+        content: responseData.result,
+        timestamp: new Date().toISOString(),
+      };
+
+      setMessages((prevMessages) => [...prevMessages, aiMessage]);
+
     } catch (error) {
       console.error("Failed to send message:", error);
+      const errorMessage = {
+        role: "assistant",
+        content: "Sorry, I couldn't respond right now. Please try again.",
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prevMessages) => [...prevMessages, errorMessage]);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    // The UI is now a single, full-page chat interface, similar to the Gossip page.
     <div className="h-full flex flex-col overflow-hidden bg-gray-50 dark:bg-gray-900">
       {currentConversation ? (
         <>
@@ -121,42 +134,41 @@ export default function Therapist() {
   );
 }
 
-// Helper components remain unchanged
+// Helper components
 function ChatMessage({ message }) {
-    const isUser = message.role === "user";
-    const date = new Date(message.timestamp);
-    const isValidDate = isValid(date);
-    return (
-      <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isUser ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 'bg-gradient-to-r from-purple-500 to-indigo-500'}`}>
-          {isUser ? <User className="w-4 h-4 text-white" /> : <Brain className="w-4 h-4 text-white" />}
-        </div>
-        <div className={`flex-1 max-w-[70%] ${isUser ? 'text-right' : 'text-left'}`}>
-          <div className={`inline-block p-3 rounded-2xl ${isUser ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'} ${isUser ? 'rounded-br-sm' : 'rounded-bl-sm'}`}>
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
-          </div>
-          <p className={`text-xs text-gray-500 dark:text-gray-400 mt-1 ${isUser ? 'text-right' : 'text-left'}`}>
-            {isValidDate ? format(date, "h:mm a") : ''}
-          </p>
-        </div>
+  const isUser = message.role === "user";
+  const date = new Date(message.timestamp);
+  const isValidDate = isValid(date);
+  return (
+    <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isUser ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 'bg-gradient-to-r from-purple-500 to-indigo-500'}`}>
+        {isUser ? <User className="w-4 h-4 text-white" /> : <Brain className="w-4 h-4 text-white" />}
       </div>
-    );
-}
-  
-function TypingIndicator() {
-    return (
-      <div className="flex gap-3">
-        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-r from-purple-500 to-indigo-500">
-          <Brain className="w-4 h-4 text-white" />
+      <div className={`flex-1 max-w-[70%] ${isUser ? 'text-right' : 'text-left'}`}>
+        <div className={`inline-block p-3 rounded-2xl ${isUser ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'} ${isUser ? 'rounded-br-sm' : 'rounded-bl-sm'}`}>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
         </div>
-        <div className="bg-white dark:bg-gray-700 rounded-2xl rounded-bl-sm p-3 shadow-sm">
-          <div className="flex space-x-1">
-            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-          </div>
-        </div>
+        <p className={`text-xs text-gray-500 dark:text-gray-400 mt-1 ${isUser ? 'text-right' : 'text-left'}`}>
+          {isValidDate ? format(date, "h:mm a") : ''}
+        </p>
       </div>
-    );
+    </div>
+  );
 }
 
+function TypingIndicator() {
+  return (
+    <div className="flex gap-3">
+      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-r from-purple-500 to-indigo-500">
+        <Brain className="w-4 h-4 text-white" />
+      </div>
+      <div className="bg-white dark:bg-gray-700 rounded-2xl rounded-bl-sm p-3 shadow-sm">
+        <div className="flex space-x-1">
+          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+        </div>
+      </div>
+    </div>
+  );
+}
