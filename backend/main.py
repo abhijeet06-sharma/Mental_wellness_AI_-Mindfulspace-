@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, HTTPException, Depends
+from fastapi import FastAPI, Request, HTTPException, Depends, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -9,6 +9,9 @@ from typing import Optional
 import google.generativeai as genai
 import os
 import sqlite3
+import random
+import smtplib
+from email.mime.text import MIMEText
 
 # --- Configuration ---
 SECRET_KEY = "your-super-secret-key-that-no-one-should-know"
@@ -128,7 +131,29 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         raise credentials_exception
     return UserInDB(id=user[0], full_name=user[1], email=user[2])
 
+# --- OTP Helper Functions ---
+def generate_otp():
+    return str(random.randint(100000, 999999))
+
+def send_otp_email(to_email, otp):
+    EMAIL_USER = os.environ.get("EMAIL_USER")
+    EMAIL_PASS = os.environ.get("EMAIL_PASS")
+    if not EMAIL_USER or not EMAIL_PASS:
+        raise RuntimeError("EMAIL_USER or EMAIL_PASS environment variable not set.")
+
+    msg = MIMEText(f"Your OTP for login/signup is: {otp}")
+    msg['Subject'] = "OTP Verification"
+    msg['From'] = EMAIL_USER
+    msg['To'] = to_email
+
+    server = smtplib.SMTP("smtp.gmail.com", 587)
+    server.starttls()
+    server.login(EMAIL_USER, EMAIL_PASS)
+    server.send_message(msg)
+    server.quit()
+
 # --- Endpoints ---
+
 @app.post("/signup", response_model=UserInDB)
 async def signup(user: UserCreate):
     cursor.execute("SELECT id FROM users WHERE email=?", (user.email,))
@@ -164,6 +189,14 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 async def read_users_me(current_user: UserInDB = Depends(get_current_user)):
     return current_user
 
+# --- OTP Endpoint ---
+@app.post("/send-otp")
+async def send_otp(email: str = Body(...)):
+    otp = generate_otp()
+    send_otp_email(email, otp)
+    # Optionally, store OTP in memory or DB for verification
+    return {"status": "OTP sent", "otp": otp}  # Remove 'otp' from response in production
+
 # --- Generate (gossip is stateless) ---
 @app.post("/generate")
 async def generate(request: Request, current_user: UserInDB = Depends(get_current_user)):
@@ -175,12 +208,10 @@ async def generate(request: Request, current_user: UserInDB = Depends(get_curren
     if not prompt:
         raise HTTPException(status_code=400, detail="Prompt is required.")
 
-    # Gossip section → no saving
     if section == "gossip":
         response = gemini_model.generate_content(prompt)
         return {"result": response.text}
 
-    # Normal section → must have conversation_id
     if not conversation_id:
         raise HTTPException(status_code=400, detail="conversation_id is required for non-gossip sections")
 
@@ -234,3 +265,4 @@ async def delete_conversation(conversation_id: str, current_user: UserInDB = Dep
     cursor.execute("DELETE FROM conversations WHERE id=? AND user_id=?", (conversation_id, current_user.id))
     conn.commit()
     return {"status": "deleted"}
+
