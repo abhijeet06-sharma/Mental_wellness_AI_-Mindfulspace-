@@ -23,7 +23,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # you can restrict this to your frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -44,7 +44,6 @@ gemini_model = genai.GenerativeModel("gemini-1.5-pro-latest")
 conn = sqlite3.connect("chat_history.db", check_same_thread=False)
 cursor = conn.cursor()
 
-# Users table
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,7 +54,6 @@ CREATE TABLE IF NOT EXISTS users (
 )
 """)
 
-# Conversations table
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS conversations (
     id TEXT PRIMARY KEY,
@@ -66,7 +64,6 @@ CREATE TABLE IF NOT EXISTS conversations (
 )
 """)
 
-# Messages table
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -147,13 +144,19 @@ def send_otp_email(to_email, otp):
     msg['To'] = to_email
 
     server = smtplib.SMTP("smtp.gmail.com", 587)
-    server.starttls()
-    server.login(EMAIL_USER, EMAIL_PASS)
-    server.send_message(msg)
-    server.quit()
+    try:
+        server.starttls()
+        server.login(EMAIL_USER, EMAIL_PASS)
+        server.send_message(msg)
+    finally:
+        server.quit()
 
-# --- Endpoints ---
+# --- Root Endpoint ---
+@app.get("/")
+async def root():
+    return {"message": "Backend is running"}
 
+# --- Signup/Login ---
 @app.post("/signup", response_model=UserInDB)
 async def signup(user: UserCreate):
     cursor.execute("SELECT id FROM users WHERE email=?", (user.email,))
@@ -194,10 +197,9 @@ async def read_users_me(current_user: UserInDB = Depends(get_current_user)):
 async def send_otp(email: str = Body(...)):
     otp = generate_otp()
     send_otp_email(email, otp)
-    # Optionally, store OTP in memory or DB for verification
-    return {"status": "OTP sent", "otp": otp}  # Remove 'otp' from response in production
+    return {"status": "OTP sent"}  # Do not return otp in production
 
-# --- Generate (gossip is stateless) ---
+# --- Generate Endpoint ---
 @app.post("/generate")
 async def generate(request: Request, current_user: UserInDB = Depends(get_current_user)):
     data = await request.json()
@@ -265,4 +267,3 @@ async def delete_conversation(conversation_id: str, current_user: UserInDB = Dep
     cursor.execute("DELETE FROM conversations WHERE id=? AND user_id=?", (conversation_id, current_user.id))
     conn.commit()
     return {"status": "deleted"}
-
