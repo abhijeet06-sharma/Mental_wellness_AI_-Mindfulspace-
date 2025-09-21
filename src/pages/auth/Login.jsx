@@ -24,7 +24,7 @@ export default function Login() {
     formData.append('password', password);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/token", {
+      const response = await fetch("https://mental-wellness-ai-mindfulspace.onrender.com/token", {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -56,7 +56,6 @@ export default function Login() {
   };
 
   return (
-    // The main container with our new animated background
     <div className="min-h-screen w-full flex items-center justify-center p-4 animated-gradient">
       <motion.div
         initial={{ opacity: 0, y: -50 }}
