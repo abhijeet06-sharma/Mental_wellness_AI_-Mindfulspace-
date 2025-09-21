@@ -4,4 +4,3 @@ python-multipart
 passlib[bcrypt]
 python-jose
 google-generativeai
-sqlite3  # standard, optional
